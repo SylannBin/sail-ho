@@ -1,0 +1,6 @@
+*.db
+.idea
+.vscode
+out/
+*.unreadable
+*password*
