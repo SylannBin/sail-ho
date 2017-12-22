@@ -151,12 +151,12 @@ public class Sale {
     //
     // SETTERS
     //
-    public void setTitle           (String  value) { title           = value; latestUpdate = new Date(); }
-    public void setDescription     (String  value) { description     = value; latestUpdate = new Date(); }
-    public void setVehicleLocation (String  value) { vehicleLocation = value; latestUpdate = new Date(); }
-    public void setVehicleBrand    (String  value) { vehicleBrand    = value; latestUpdate = new Date(); }
-    public void setVehicleModel    (String  value) { vehicleModel    = value; latestUpdate = new Date(); }
-    public void setVehicleYear     (Integer value) { vehicleYear     = value; latestUpdate = new Date(); }
-    public void setMileage         (Integer value) { mileage         = value; latestUpdate = new Date(); }
-    public void setProposedPrice   (Float   value) { proposedPrice   = value; latestUpdate = new Date(); }
+    public void setTitle           (String  value) { if (value == null) return; title           = value; latestUpdate = new Date(); }
+    public void setDescription     (String  value) { if (value == null) return; description     = value; latestUpdate = new Date(); }
+    public void setVehicleLocation (String  value) { if (value == null) return; vehicleLocation = value; latestUpdate = new Date(); }
+    public void setVehicleBrand    (String  value) { if (value == null) return; vehicleBrand    = value; latestUpdate = new Date(); }
+    public void setVehicleModel    (String  value) { if (value == null) return; vehicleModel    = value; latestUpdate = new Date(); }
+    public void setVehicleYear     (Integer value) { if (value == null) return; vehicleYear     = value; latestUpdate = new Date(); }
+    public void setMileage         (Integer value) { if (value == null) return; mileage         = value; latestUpdate = new Date(); }
+    public void setProposedPrice   (Float   value) { if (value == null) return; proposedPrice   = value; latestUpdate = new Date(); }
 }

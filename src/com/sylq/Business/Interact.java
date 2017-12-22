@@ -140,13 +140,13 @@ public class Interact {
         String vehicleBrand    = newField(scin, "Vehicle brand");
         String vehicleModel    = newField(scin, "Vehicle model");
 
-        String s_vehicleYear   = newField(scin, "Vehicle year (Business year such as 2017): ");
+        String s_vehicleYear   = newField(scin, "Vehicle year (Business year such as 2017)");
         Integer vehicleYear    = validateBusinessYear(s_vehicleYear);
 
-        String s_mileage       = newField(scin, "Mileage (Positive integer such as 105): ");
+        String s_mileage       = newField(scin, "Mileage (Positive integer such as 105)");
         Integer mileage        = validatePositiveInteger(s_mileage);
 
-        String s_proposedPrice = newField(scin, "Proposed price (Positive float such as 105.46): ");
+        String s_proposedPrice = newField(scin, "Proposed price (Positive float such as 105.46)");
         Float  proposedPrice   = validatePositiveFloat(s_proposedPrice);
 
         Sale newSale = new Sale(
@@ -254,13 +254,13 @@ public class Interact {
         sale.setVehicleBrand(editField(scin, "vehicle brand"));
         sale.setVehicleModel(editField(scin, "vehicle model"));
 
-        String vehicleYear = editField(scin, "Vehicle year (Business year such as 2017): ");
+        String vehicleYear = editField(scin, "Vehicle year (Business year such as 2017)");
         sale.setVehicleYear(validateBusinessYear(vehicleYear));
 
-        String mileage = editField(scin, "Mileage (Positive integer such as 105): ");
+        String mileage = editField(scin, "Mileage (Positive integer such as 105)");
         sale.setMileage(validatePositiveInteger(mileage));
 
-        String proposedPrice = editField(scin, "Proposed price (Positive float such as 105.46): ");
+        String proposedPrice = editField(scin, "Proposed price (Positive float such as 105.46)");
         sale.setProposedPrice(validatePositiveFloat(proposedPrice));
 
         Database.updateSale(sale);
@@ -272,6 +272,7 @@ public class Interact {
     public static void deleteUser() {
         int userId = promptId();
         Database.deleteUser(userId);
+        success("User deleted");
     }
 
     /**
@@ -280,6 +281,7 @@ public class Interact {
     public static void deleteSale() {
         int saleId = promptId();
         Database.deleteSale(saleId);
+        success("Sale deleted");
     }
 
     /**
@@ -289,8 +291,11 @@ public class Interact {
     public static void contactSeller(User buyer) {
         int id = promptId();
         Sale sale = Database.getSale(id);
-        if (sale != null)
-            sale.contact();
+        if (sale == null) {
+            error("Invalid sale id");
+            return;
+        }
+        sale.contact();
         // TODO: Add a table for messages. Users can consult their messages
         // Database.addMessage(buyer, sale.getSeller());
     }
@@ -392,12 +397,14 @@ public class Interact {
      * @return The new value in case of success else null.
      */
     private static Integer validateBusinessYear(String input) {
+        if (input == null)
+            return null; // null value is handled
         try {
             Integer verifiedInput = Integer.parseInt(input);
-            assert verifiedInput <= 2100;
-            assert verifiedInput >= 1900;
+            if (verifiedInput < 1900 || 2100 < verifiedInput)
+                throw new NumberFormatException();
             return verifiedInput;
-        } catch (AssertionError | NumberFormatException e) {
+        } catch (NumberFormatException e) {
             error("Expected a valid year but got " + input);
             return null;
         }
@@ -409,11 +416,14 @@ public class Interact {
      * @return The new value in case of success else null.
      */
     private static Integer validatePositiveInteger(String input) {
+        if (input == null)
+            return null; // null value is handled
         try {
             Integer verifiedInput = Integer.parseInt(input);
-            assert verifiedInput >= 0;
+            if (verifiedInput < 0)
+                throw new NumberFormatException();
             return verifiedInput;
-        } catch (AssertionError | NumberFormatException e) {
+        } catch (NumberFormatException e) {
             error("Expected a positive number but got " + input);
             return null;
         }
@@ -425,11 +435,14 @@ public class Interact {
      * @return The new value in case of success else null.
      */
     private static Float validatePositiveFloat(String input) {
+        if (input == null)
+            return null; // null value is handled
         try {
             Float verifiedInput = Float.parseFloat(input);
-            assert verifiedInput >= 0.0f;
+            if (verifiedInput < 0.0f)
+                throw new NumberFormatException();
             return verifiedInput;
-        } catch (AssertionError | NumberFormatException e) {
+        } catch (NumberFormatException e) {
             error("Expected a positive float number but got " + input);
             return null;
         }

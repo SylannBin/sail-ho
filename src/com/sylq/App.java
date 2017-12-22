@@ -57,7 +57,6 @@ public class App {
                 menuConnectedAsUser();
             }
         }
-
     }
 
     private static void menuNotConnected() {
@@ -89,14 +88,13 @@ public class App {
     private static void menuUsers() {
         currentMenu = Menu.Users; // Default
 
-        switch (Interact.menu(Arrays.asList("List", "New", "Detail", "Edit", "Delete", "Contact seller", "Back to main menu"))) {
+        switch (Interact.menu(Arrays.asList("List", "New", "Detail", "Edit", "Delete", "Back to main menu"))) {
             case 1: Interact.listUsers();                  break;
             case 2: Interact.createUser();                break;
             case 3: Interact.viewUserDetail();            break;
             case 4: Interact.editUser();                  break;
             case 5: Interact.deleteUser();                break;
-            case 6: Interact.contactSeller(currentUser);  break;
-            case 7: exitMenu();                           break;
+            case 6: exitMenu();                           break;
             default: invalidAction();                     break;
         }
     }
@@ -104,14 +102,15 @@ public class App {
     private static void menuSales() {
         currentMenu = Menu.Sales; // Default
 
-        switch (Interact.menu(Arrays.asList("List", "New", "Detail", "Edit", "Delete", "Back to main menu"))) {
-            case 1: Interact.listSales();             break;
-            case 2: Interact.createSale(currentUser); break;
-            case 3: Interact.viewSaleDetail();        break;
-            case 4: Interact.editSale();              break;
-            case 5: Interact.deleteSale();            break;
-            case 6: exitMenu();                       break;
-            default: invalidAction();                 break;
+        switch (Interact.menu(Arrays.asList("List", "Contact seller", "New", "Detail", "Edit", "Delete", "Back to main menu"))) {
+            case 1: Interact.listSales();                break;
+            case 2: Interact.contactSeller(currentUser); break;
+            case 3: Interact.createSale(currentUser);    break;
+            case 4: Interact.viewSaleDetail();           break;
+            case 5: Interact.editSale();                 break;
+            case 6: Interact.deleteSale();               break;
+            case 7: exitMenu();                          break;
+            default: invalidAction();                    break;
         }
     }
 
