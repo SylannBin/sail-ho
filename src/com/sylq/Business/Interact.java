@@ -4,7 +4,6 @@ import com.sylq.Model.Sale;
 import com.sylq.Model.Rank;
 import com.sylq.Model.User;
 
-import java.text.ParseException;
 import java.util.*;
 
 import static com.sylq.Common.Utils.*;
@@ -31,6 +30,23 @@ import static com.sylq.Common.Utils.*;
  *   7 Back
  */
 public class Interact {
+    /**
+     * Init Database if needed and propose to fill it with data if tables were created.
+     * Else do nothing.
+     */
+    public static void initDB() {
+        Scanner scin = new Scanner(System.in);
+        info("Checking database...");
+        if (Database.initDB()) {
+            print("Add example data? yes/No");
+            String yn = scin.nextLine();
+            if (yn.equalsIgnoreCase("y") || yn.equalsIgnoreCase("yes")) {
+                Database.fixtures();
+            }
+        } else {
+            info("Database is ok.");
+        }
+    }
 
     /**
      *
@@ -39,7 +55,7 @@ public class Interact {
     public static User connect() {
         Scanner scin = new Scanner(System.in);
 
-        info("Please enter your credentials.");
+        print("Please enter your credentials.");
         System.out.print("Login (email): ");
         String email = scin.nextLine();
 
@@ -57,39 +73,40 @@ public class Interact {
             return null;
         }
 
+        success("Successfully authenticated as " + authenticatedUser.getEmail());
+
         return authenticatedUser;
     }
 
     /**
-     *
-     * @return
+     * Create a new user.
+     * @return The newly created user.
      */
     public static User createUser() {
         Scanner scin = new Scanner(System.in);
-        System.out.print("Enter your email: ");
-        String email = scin.nextLine();
 
+        String email = newField(scin, "email");
+        if (email.isEmpty() || !emailIsValid(email)) {
+            warn("Email is not valid");
+            return null;
+        }
         if (Database.getUserByEmail(email) != null) {
             warn("Email is not available");
             return null;
         }
 
-        System.out.print("Enter your password: ");
-        String password = scin.nextLine();
-
-        System.out.print("Confirm your password: ");
-        String password2 = scin.nextLine();
-
-        if (!password.equals(password2)) {
-            error("Passwords don't match: " + password + ", " + password2);
+        String password = newField(scin, "password");
+        System.out.print("Confirm: ");
+        if (!Objects.equals(password, scin.nextLine())) {
+            error("Passwords don't match");
             return null;
         }
 
-        info("Optional information");
-        String firstname = editField(scin, "First name");
-        String lastname  = editField(scin, "Last name");
-        String address   = editField(scin, "Address");
-        String phone     = editField(scin, "Phone");
+        print("Optional information");
+        String firstname = newField(scin, "First name");
+        String lastname  = newField(scin, "Last name");
+        String address   = newField(scin, "Address");
+        String phone     = newField(scin, "Phone");
 
         User newUser = new User(email, password, firstname, lastname, address, phone);
 
@@ -97,24 +114,40 @@ public class Interact {
             error("Subscription failed");
             return null;
         }
+
+        success("User " + newUser.getEmail() + " successfully created!");
+
         return newUser;
     }
 
     /**
-     *
-     * @param seller
+     * Create a new sale associated to the provided seller.
+     * @param seller Owner of the Sale.
+     * @return The newly created sale.
      */
-    public static void createSale(User seller) {
+    public static Sale createSale(User seller) {
         Scanner scin = new Scanner(System.in);
 
-        String title           = editField(scin, "Title");
-        String description     = editField(scin, "Description");
-        String vehicleLocation = editField(scin, "Vehicle location");
-        String vehicleBrand    = editField(scin, "Vehicle brand");
-        String vehicleModel    = editField(scin, "Vehicle model");
-        Integer vehicleYear    = editBusinessYear(scin, "Vehicle year");
-        Integer mileage        = editPositiveInteger(scin, "Mileage");
-        Float  proposedPrice   = editPositiveFloat(scin, "Proposed price");
+        String title = newField(scin, "Title");
+
+        if (title.isEmpty() || Database.getSaleBySellerAndTitle(seller, title) != null) {
+            warn("The title is required.");
+            return null;
+        }
+
+        String description     = newField(scin, "Description");
+        String vehicleLocation = newField(scin, "Vehicle location");
+        String vehicleBrand    = newField(scin, "Vehicle brand");
+        String vehicleModel    = newField(scin, "Vehicle model");
+
+        String s_vehicleYear   = newField(scin, "Vehicle year (Business year such as 2017): ");
+        Integer vehicleYear    = validateBusinessYear(s_vehicleYear);
+
+        String s_mileage       = newField(scin, "Mileage (Positive integer such as 105): ");
+        Integer mileage        = validatePositiveInteger(s_mileage);
+
+        String s_proposedPrice = newField(scin, "Proposed price (Positive float such as 105.46): ");
+        Float  proposedPrice   = validatePositiveFloat(s_proposedPrice);
 
         Sale newSale = new Sale(
                 seller, title, description, vehicleLocation, vehicleBrand,
@@ -122,7 +155,26 @@ public class Interact {
 
         if (Database.createSale(newSale) == null) {
             error("Creation of the sale table has failed");
+            return null;
         }
+
+        success("New sale " + newSale.getTitle() + " successfully added!");
+
+        return newSale;
+    }
+
+    /**
+     * Use Database method to list existing users.
+     */
+    public static void listUsers() {
+        Database.getUsers();
+    }
+
+    /**
+     * Use Database method to list existing sales.
+     */
+    public static void listSales() {
+        Database.getSales();
     }
 
     /**
@@ -159,11 +211,21 @@ public class Interact {
             return;
         }
 
+        print("Modifying user " + user.getId() + ": " + user.getEmail());
+
         Scanner scin = new Scanner(System.in);
 
         user.setEmail(editField(scin, "Email"));
+
+        if (!emailIsValid(user.getEmail())) {
+            warn("Email is not valid");
+            return;
+        }
         user.setPassword(editPassword(scin, user.getPassword()));
-        user.setRank(editRank(scin, "Rank"));
+
+        String rank = editField(scin, "Rank" + helpRank());
+        user.setRank(validateRank(rank));
+
         user.setFirstname(editField(scin, "First name"));
         user.setLastname(editField(scin, "Last name"));
         user.setAddress(editField(scin, "Address"));
@@ -182,6 +244,8 @@ public class Interact {
             return;
         }
 
+        print("Modifying sale " + sale.getId() + ": " + sale.getTitle());
+
         Scanner scin = new Scanner(System.in);
 
         sale.setTitle(editField(scin, "title"));
@@ -190,9 +254,14 @@ public class Interact {
         sale.setVehicleBrand(editField(scin, "vehicle brand"));
         sale.setVehicleModel(editField(scin, "vehicle model"));
 
-        sale.setVehicleYear(editBusinessYear(scin, "Vehicle year"));
-        sale.setMileage(editPositiveInteger(scin, "Mileage"));
-        sale.setProposedPrice(editPositiveFloat(scin, "Proposed price"));
+        String vehicleYear = editField(scin, "Vehicle year (Business year such as 2017): ");
+        sale.setVehicleYear(validateBusinessYear(vehicleYear));
+
+        String mileage = editField(scin, "Mileage (Positive integer such as 105): ");
+        sale.setMileage(validatePositiveInteger(mileage));
+
+        String proposedPrice = editField(scin, "Proposed price (Positive float such as 105.46): ");
+        sale.setProposedPrice(validatePositiveFloat(proposedPrice));
 
         Database.updateSale(sale);
     }
@@ -218,8 +287,7 @@ public class Interact {
      * @param buyer current user of the app, who decides to contact the owner of a car.
      */
     public static void contactSeller(User buyer) {
-        Scanner scin = new Scanner(System.in);
-        Integer id = editPositiveInteger(scin, "Sale id: ");
+        int id = promptId();
         Sale sale = Database.getSale(id);
         if (sale != null)
             sale.contact();
@@ -232,8 +300,7 @@ public class Interact {
      * Makes it unavailable and tranfers money between accounts.
      */
     public static void acceptOffer(User buyer) {
-        Scanner scin = new Scanner(System.in);
-        Integer id = editPositiveInteger(scin, "Sale id: ");
+        Integer id = promptId();
         Sale sale = Database.getSale(id);
         if (sale != null)
             sale.sold(buyer);
@@ -244,7 +311,7 @@ public class Interact {
      * @param choices List of labels for possible choices of this menu.
      */
     public static int menu(List<String> choices) {
-        info("Choose an action:");
+        print("Choose an action:");
         for (int i = 0; i < choices.size(); i++) {
             System.out.printf("  %d %s\n", i + 1, choices.get(i));
         }
@@ -259,20 +326,15 @@ public class Interact {
      */
     private static int validateChoice(int maxChoice) {
         Scanner scin = new Scanner(System.in);
-        int choice = scin.nextInt();
-        if (choice < 0 || choice > maxChoice)
-            choice = 0;
-
-        return choice;
-        // String input = "2"; //System.console().readLine();
-        // try {
-        //     int choice = Integer.parseInt(input);
-        //     assert choice > 0;
-        //     assert choice <= maxChoice;
-        //     return choice;
-        // } catch (NumberFormatException | AssertionError e) {
-        //     return 0;
-        // }
+        int choice;
+        try {
+            choice = scin.nextInt();
+            assert choice >= 0;
+            assert choice <= maxChoice;
+            return choice;
+        } catch (InputMismatchException | AssertionError e) {
+            return 0;
+        }
     }
 
     /**
@@ -281,29 +343,55 @@ public class Interact {
      */
     private static int promptId() {
         Scanner scin = new Scanner(System.in);
-        System.out.print("Enter id: ");
+        System.out.print("Which one? (specify id): ");
         return scin.nextInt();
     }
 
     /**
-     * Prompt the user to enter a value that matches the field description.
-     * @param scin scanner
-     * @param field indicate what is edited
-     * @return User input (string)
+     * Ask wether to modify the provided field or not.
+     * @param scin
+     * @param field
+     * @return either true or false
      */
-    private static String editField(Scanner scin, String field) {
+    private static boolean promptYesNo(Scanner scin, String field) {
+        System.out.print("Change " + field + "? (y/n)");
+        String yn = scin.next();
+        scin.nextLine(); // consume newline now. Avoids next newLine to be skipped.
+
+        return yn.equalsIgnoreCase("y");
+    }
+
+    /**
+     * Prompt for a new value for the provided field.
+     * @param scin
+     * @param field
+     * @return
+     */
+    private static String newField(Scanner scin, String field) {
         System.out.print(field + ": ");
         return scin.nextLine();
     }
 
     /**
-     * Prompt for a valid business year and verify it.
+     * Prompt for a value to replace the old one.
      * @param scin scanner
      * @param field indicate what is edited
+     * @return User input (string)
+     */
+    private static String editField(Scanner scin, String field) {
+        if (promptYesNo(scin, field)) {
+            System.out.print("New value: ");
+            return scin.nextLine();
+        }
+        return null;
+    }
+
+    /**
+     * Ensure a string is a valid business year.
+     * @param input value to verify
      * @return The new value in case of success else null.
      */
-    private static Integer editBusinessYear(Scanner scin, String field) {
-        String input = editField(scin, field + " (Business year such as 2017): ");
+    private static Integer validateBusinessYear(String input) {
         try {
             Integer verifiedInput = Integer.parseInt(input);
             assert verifiedInput <= 2100;
@@ -316,14 +404,11 @@ public class Interact {
     }
 
     /**
-     * Prompt for a valid positive integer and verify it.
-     * @param scin scanner
-     * @param field indicate what is edited
+     * Ensure a string is a valid positive integer.
+     * @param input value to verify
      * @return The new value in case of success else null.
      */
-    private static Integer editPositiveInteger(Scanner scin, String field) {
-        System.out.print("Positive integer ");
-        String input = editField(scin, field + " (Positive integer such as 105): ");
+    private static Integer validatePositiveInteger(String input) {
         try {
             Integer verifiedInput = Integer.parseInt(input);
             assert verifiedInput >= 0;
@@ -335,13 +420,11 @@ public class Interact {
     }
 
     /**
-     * Prompt for a valid positive floating point number and verify it.
-     * @param scin scanner
-     * @param field indicate what is edited
+     * Ensure a string is a valid floating point number.
+     * @param input value to verify
      * @return The new value in case of success else null.
      */
-    private static Float editPositiveFloat(Scanner scin, String field) {
-        String input = editField(scin, field + " (Positive float such as 105.46): ");
+    private static Float validatePositiveFloat(String input) {
         try {
             Float verifiedInput = Float.parseFloat(input);
             assert verifiedInput >= 0.0f;
@@ -353,52 +436,50 @@ public class Interact {
     }
 
     /**
-     * Prompt for a valid formatted date and verify it.
-     * @param scin scanner
-     * @param field indicate what is edited
-     * @return The new value in case of success else null.
+     * Build a detailed help for the rank type.
+     * @return The help string
      */
-    private static Date editDate(Scanner scin, String field) {
-        String input = editField(scin, field + " (Format dd/mm/yyyy): ");
-        try {
-            return LOCALE_FORMAT.parse(input);
-        } catch (ParseException e) {
-            error("Expected a valid date but got " + input);
-            return null;
+    private static String helpRank() {
+        StringBuilder detail = new StringBuilder(" (Correct values are ");
+        for (Rank r: Rank.values()) {
+            detail.append(r.name());
+            detail.append(", ");
         }
+        detail.setLength(detail.length() - 2); // remove last ', '
+        detail.append("): ");
+        return detail.toString();
     }
 
     /**
-     * Prompt for a valid Rank and verify it.
-     * @param scin scanner
-     * @param field indicate what is edited
+     * Ensure a string is a valid rank.
+     * @param input value to verify
      * @return The new value in case of success else null.
      */
-    private static Rank editRank(Scanner scin, String field) {
-        StringBuilder detail = new StringBuilder(" (Correct values are ");
-        for (Rank r: Rank.values())
-            detail.append(r.name());
-        detail.append("): ");
-        String input = editField(scin, field + detail);
+    private static Rank validateRank(String input) {
         try {
             return Rank.valueOf(input);
-        } catch (IllegalArgumentException e) {
-            error("Expected a valid Rank but got " + input);
+        } catch (IllegalArgumentException | NullPointerException e) {
             return null;
         }
     }
 
     /**
-     * Prompt for the old password and a new one. Verify that they match.
+     * Propose to change the password.
+     * If changing, ask the old password and verify that it is valid.
+     * If valid, ask for a new password twice, they must match.
      * @param scin scanner
      * @param oldPassword
      * @return The new value in case of success else the old one.
      */
     private static String editPassword(Scanner scin, String oldPassword) {
-        System.out.print("Old password: ");
+        if (!promptYesNo(scin, "password")) {
+            return null;
+        }
+
+        System.out.print("Verify old password: ");
         String inputPassword = scin.nextLine();
 
-        if (oldPassword != null && !oldPassword.equals(inputPassword)) {
+        if (!Objects.equals(oldPassword, inputPassword)) {
             error("Password is not valid");
             return null;
         }
@@ -406,9 +487,10 @@ public class Interact {
         System.out.print("New password: ");
         String newPassword = scin.nextLine();
 
-        if (oldPassword != null && !oldPassword.equals(newPassword)) {
+        System.out.print("Confirm: ");
+        if (!Objects.equals(newPassword, scin.nextLine())) {
             error("Passwords don't match");
-            return oldPassword;
+            return null;
         }
         return newPassword;
     }

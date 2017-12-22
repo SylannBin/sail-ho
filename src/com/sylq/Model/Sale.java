@@ -3,7 +3,7 @@ package com.sylq.Model;
 import java.util.Date;
 
 import static com.sylq.Common.Utils.databaseDate;
-import static com.sylq.Common.Utils.info;
+import static com.sylq.Common.Utils.*;
 
 public class Sale {
     // FIELDS
@@ -117,7 +117,7 @@ public class Sale {
     public void sold(User buyer) {
         isAvailable = false;
         latestUpdate = new Date();
-        info(buyer.getFullname() + "accepts the offer!\n"
+        print(buyer.getFullname() + "accepts the offer!\n"
             + seller.getFullname() + " receives " + this.proposedPrice + "€");
         // TODO: Add debit/credit system
     }

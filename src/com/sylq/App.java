@@ -7,7 +7,6 @@ package com.sylq;
 
 import java.util.Arrays;
 
-import com.sylq.Business.Database;
 import com.sylq.Common.Utils;
 import com.sylq.Model.Rank;
 import com.sylq.Model.User;
@@ -34,14 +33,14 @@ public class App {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        Database.runFixtures();
-
         Utils.APPLICATION_LOG_LEVEL = Utils.LogLevel.INFO;
 
-        info("Sale Ho! lasses and lads! Sale!");
+        Interact.initDB();
+
+        success("Sale Ho! lasses and lads! Sale!");
         info("\nWelcome to this humble car sales application.\nSign in now to enjoy our incredible services!\n");
+
         while (runProgram) {
-            // System.out.flush();
             if (currentUser == null) {
                 menuNotConnected();
             }
@@ -58,31 +57,32 @@ public class App {
                 menuConnectedAsUser();
             }
         }
+
     }
 
     private static void menuNotConnected() {
         switch (Interact.menu(Arrays.asList("Subscribe", "Connect", "Quit"))) {
             case 1: currentUser = Interact.createUser(); break;
             case 2: currentUser = Interact.connect();    break;
-            case 3: runProgram = false;                  break;
-            default:                                     break;
+            case 3: exitProgram();                       break;
+            default: invalidAction();                    break;
         }
     }
 
     private static void menuConnectedAsAdmin() {
         switch (Interact.menu(Arrays.asList("Users", "Sales", "Disconnect"))) {
-            case 1: currentMenu = Menu.Users;     break;
-            case 2: currentMenu = Menu.Sales;     break;
-            case 3: currentUser = null;           break;
-            default:                              break;
+            case 1: currentMenu = Menu.Users; break;
+            case 2: currentMenu = Menu.Sales; break;
+            case 3: disconnect();             break;
+            default: invalidAction();         break;
         }
     }
 
     private static void menuConnectedAsUser() {
         switch (Interact.menu(Arrays.asList("Sales", "Disconnect"))) {
-            case 1: currentMenu = Menu.Sales;     break;
-            case 2: currentUser = null;           break;
-            default:                              break;
+            case 1: currentMenu = Menu.Sales; break;
+            case 2: disconnect();             break;
+            default: invalidAction();         break;
         }
     }
 
@@ -90,14 +90,14 @@ public class App {
         currentMenu = Menu.Users; // Default
 
         switch (Interact.menu(Arrays.asList("List", "New", "Detail", "Edit", "Delete", "Contact seller", "Back to main menu"))) {
-            case 1: Database.getUsers();                  break;
+            case 1: Interact.listUsers();                  break;
             case 2: Interact.createUser();                break;
             case 3: Interact.viewUserDetail();            break;
             case 4: Interact.editUser();                  break;
             case 5: Interact.deleteUser();                break;
             case 6: Interact.contactSeller(currentUser);  break;
-            case 7: currentMenu = null;                   break;
-            default:                                      break;
+            case 7: exitMenu();                           break;
+            default: invalidAction();                     break;
         }
     }
 
@@ -105,13 +105,32 @@ public class App {
         currentMenu = Menu.Sales; // Default
 
         switch (Interact.menu(Arrays.asList("List", "New", "Detail", "Edit", "Delete", "Back to main menu"))) {
-            case 1: Database.getSales();              break;
+            case 1: Interact.listSales();             break;
             case 2: Interact.createSale(currentUser); break;
             case 3: Interact.viewSaleDetail();        break;
             case 4: Interact.editSale();              break;
             case 5: Interact.deleteSale();            break;
-            case 6: currentMenu = null;               break;
-            default:                                  break;
+            case 6: exitMenu();                       break;
+            default: invalidAction();                 break;
         }
+    }
+
+    private static void exitProgram() {
+        print("See you around!");
+        runProgram = false;
+    }
+
+    private static void disconnect() {
+        print(currentUser.getEmail() + " disconnected successfully.");
+        currentUser = null;
+    }
+
+    private static void exitMenu() {
+        print("Back to main menu.");
+        currentMenu = null;
+    }
+
+    private static void invalidAction() {
+        warn("Not a valid action.");
     }
 }

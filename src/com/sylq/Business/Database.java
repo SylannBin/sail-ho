@@ -10,8 +10,12 @@ import static com.sylq.Common.Utils.info;
 import static com.sylq.Common.Utils.stringifyDate;
 import static com.sylq.Common.Utils.warn;
 
-public class Database {
+class Database {
 
+    /**
+     * Iterate over users from the database and print a short
+     * description of each of them.
+     */
     public static void getUsers() {
         String sql = "SELECT"
                 + " id, inscriptionDate, email, password, rank, firstname, lastname, address, phone"
@@ -23,9 +27,13 @@ public class Database {
 
             while (rs.next()) { System.out.println(sqlResultToUser(rs)); }
 
-        } catch (SQLException e) { warn(e.getMessage()); }
+        } catch (SQLException | NullPointerException e) { warn(e.getMessage()); }
     }
 
+    /**
+     * Iterate over sales from the database and print a short
+     * description of each of them.
+     */
     public static void getSales() {
         String sql = "SELECT"
                 + " id, seller, creationDate, latestUpdate, title, description, vehicleLocation,"
@@ -38,13 +46,13 @@ public class Database {
 
             while (rs.next()) { System.out.println(sqlResultToSale(rs)); }
 
-        } catch (SQLException e) { warn(e.getMessage()); }
+        } catch (SQLException | NullPointerException e) { warn(e.getMessage()); }
     }
 
     /**
      * Select user by provided id.
      * @param id
-     * @return A user with the provided id or null.
+     * @return The user with the provided id or null.
      */
     public static User getUser(int id) {
         String sql = "SELECT"
@@ -60,7 +68,7 @@ public class Database {
 
             if (rs.next()) { return sqlResultToUser(rs); }
 
-        } catch (SQLException e) { warn(e.getMessage()); }
+        } catch (SQLException | NullPointerException e) { warn(e.getMessage()); }
         return null;
     }
 
@@ -83,10 +91,15 @@ public class Database {
 
             if (rs.next()) { return sqlResultToUser(rs); }
 
-        } catch (SQLException e) { warn(e.getMessage()); }
+        } catch (SQLException | NullPointerException e) { warn(e.getMessage()); }
         return null;
     }
 
+    /**
+     * Select sale by provided id.
+     * @param id
+     * @return The sale having the provided id or null.
+     */
     public static Sale getSale(int id) {
         String sql = "SELECT"
                 + " id, seller, creationDate, latestUpdate, title, description, vehicleLocation,"
@@ -106,6 +119,37 @@ public class Database {
         return null;
     }
 
+    /**
+     * Select sale by provided seller and title.
+     * @param seller owner of a sale
+     * @param title
+     * @return The sale having the provided information or null.
+     */
+    public static Sale getSaleBySellerAndTitle(User seller, String title) {
+        String sql = "SELECT"
+                + " id, seller, creationDate, latestUpdate, title, description, vehicleLocation,"
+                + " vehicleBrand, vehicleModel, vehicleYear, mileage, proposedPrice, isAvailable"
+                + " FROM Sales"
+                + " WHERE seller = ? AND title = ?";
+
+        try (Connection conn = connect();
+             PreparedStatement pstmt  = conn.prepareStatement(sql)){
+
+            pstmt.setInt(1, seller.getId());
+            pstmt.setString(2, title);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) { return sqlResultToSale(rs); }
+
+        } catch (SQLException | NullPointerException e) { warn(e.getMessage()); }
+        return null;
+    }
+
+    /**
+     * Insert the provided user into the database users table.
+     * @param newUser
+     * @return The last inserted id.
+     */
     public static Integer createUser(User newUser) {
         String sql = "INSERT INTO Users"
                 + " (inscriptionDate, email, password, rank, firstname, lastname, address, phone)"
@@ -128,10 +172,15 @@ public class Database {
             if (rs.next())
                 return rs.getInt(1); // last inserted id
 
-        } catch (SQLException e) { warn(e.getMessage()); }
+        } catch (SQLException | NullPointerException e) { warn(e.getMessage()); }
         return null;
     }
 
+    /**
+     * Insert the provided user into the database users table.
+     * @param newSale
+     * @return The last inserted id.
+     */
     public static Integer createSale(Sale newSale) {
         String sql = "INSERT INTO Sales"
                 + " (seller, creationDate, latestUpdate, title, description, vehicleLocation,"
@@ -159,10 +208,15 @@ public class Database {
             if (rs.next())
                 return rs.getInt(1); // last inserted id
 
-        } catch (SQLException e) { warn(e.getMessage()); }
+        } catch (SQLException | NullPointerException e) { warn(e.getMessage()); }
         return null;
     }
 
+    /**
+     * Update the user information with the provided updated user.
+     * Need to have a defined id.
+     * @param updatedUser
+     */
     public static void updateUser(User updatedUser) {
         String sql = "UPDATE Users SET"
                 + " email = ?, password = ?, rank = ?, firstname = ?, lastname = ?, address = ?, phone = ?"
@@ -181,9 +235,14 @@ public class Database {
             pstmt.setInt   (8, updatedUser.getId());
             pstmt.executeUpdate();
 
-        } catch (SQLException e) { warn(e.getMessage()); }
+        } catch (SQLException | NullPointerException e) { warn(e.getMessage()); }
     }
 
+    /**
+     * Update the sale information with the provided updated sale.
+     * Need to have a defined id.
+     * @param updatedSale
+     */
     public static void updateSale(Sale updatedSale) {
         String sql = "UPDATE Sales SET"
                    + " latestUpdate = ?, title = ?, description = ?, vehicleLocation = ?, vehicleBrand = ?,"
@@ -206,11 +265,15 @@ public class Database {
             pstmt.setInt    (11, updatedSale.getId());
             pstmt.executeUpdate();
 
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             warn(e.getMessage());
         }
     }
 
+    /**
+     * Delete the user having the provided id from the database.
+     * @param id user identity
+     */
     public static void deleteUser(int id) {
         String sql = "DELETE FROM Users WHERE id = ?";
  
@@ -220,11 +283,15 @@ public class Database {
             pstmt.setInt(1, id);
             pstmt.executeUpdate();
  
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             warn(e.getMessage());
         }
     }
 
+    /**
+     * Delete the sale having the provided id from the database.
+     * @param id sale identity
+     */
     public static void deleteSale(int id) {
         String sql = "DELETE FROM Sales WHERE id = ?";
  
@@ -234,14 +301,32 @@ public class Database {
             pstmt.setInt(1, id);
             pstmt.executeUpdate();
  
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             warn(e.getMessage());
         }
     }
 
-    public static void runFixtures() {
-        initTableUser();
-        initTableSale();
+    /**
+     * Create needed databases if they do not already exist.
+     */
+    public static boolean initDB() {
+        int created = 0;
+        if (initTableUser()) {
+            info("Created Users table");
+            created++;
+        }
+        if (initTableSale()) {
+            info("Created Sales table");
+            created++;
+        }
+        return created > 0;
+    }
+
+    /**
+     * Add some content for testing purposes.
+     * Lines that do not respect database constraints will not be added.
+     */
+    public static void fixtures() {
 
         User[] users = {
             new User(1, "2016-10-15 15:25:32", "romstock@gmail.com", "toc toc", 2, "Romain", "Vincent", "4 rue du bois, 38240 Meylan", "+33601020304"),
@@ -267,7 +352,7 @@ public class Database {
         try {
             return DriverManager.getConnection("jdbc:sqlite:dev.db");
 
-        } catch (SQLException e) { warn(e.getMessage()); }
+        } catch (SQLException | NullPointerException e) { warn(e.getMessage()); }
         return null;
     }
 
@@ -315,8 +400,11 @@ public class Database {
         );
     }
 
-    private static void initTableUser() {
-        String sql = "CREATE TABLE IF NOT EXISTS Users ("
+    /**
+     * Create the users table in the database.
+     */
+    private static boolean initTableUser() {
+        String sql = "CREATE TABLE Users ("
                 + "\n    id              INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + "\n    inscriptionDate TEXT    NOT NULL,"
                 + "\n    email           TEXT    NOT NULL UNIQUE,"
@@ -332,18 +420,22 @@ public class Database {
              Statement stmt = conn.createStatement()) {
 
             stmt.execute(sql);
-            info("Created Users table");
+            return true;
 
-        } catch (SQLException e) { warn(e.getMessage()); }
+        } catch (SQLException | NullPointerException e) { warn(e.getMessage()); }
+        return false;
     }
 
-    private static void initTableSale() {
-        String sql = "CREATE TABLE IF NOT EXISTS Sales ("
+    /**
+     * Create the sales table in the database.
+     */
+    private static boolean initTableSale() {
+        String sql = "CREATE TABLE Sales ("
                 + "\n    id              INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + "\n    seller          INTEGER NOT NULL,"
                 + "\n    creationDate    TEXT    NOT NULL,"
                 + "\n    latestUpdate    TEXT,"
-                + "\n    title           TEXT,"
+                + "\n    title           TEXT    NOT NULL,"
                 + "\n    description     TEXT,"
                 + "\n    vehicleLocation TEXT,"
                 + "\n    vehicleBrand    TEXT,"
@@ -352,15 +444,17 @@ public class Database {
                 + "\n    mileage         INTEGER,"
                 + "\n    proposedPrice   REAL,"
                 + "\n    isAvailable     INTEGER NOT NULL,"
-                + "\n    FOREIGN KEY (seller) REFERENCES Users (id)"
+                + "\n    FOREIGN KEY (seller) REFERENCES Users (id),"
+                + "\n    UNIQUE(seller, title) ON CONFLICT IGNORE"
                 + "\n)";
 
         try (Connection conn = connect();
              Statement stmt = conn.createStatement()) {
 
             stmt.execute(sql);
-            info("Created Sales table");
+            return true;
 
-        } catch (SQLException e) { warn(e.getMessage()); }
+        } catch (SQLException | NullPointerException e) { warn(e.getMessage()); }
+        return false;
     }
 }
